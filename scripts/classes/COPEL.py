@@ -40,13 +40,17 @@ class COPEL(Fatura):
         df = self.arruma_consumos_nao_separados(df)
         df = self.remove_outliers(self.muda_tipo(df))
         self._consumo = df[["datas", "consumo_ponta", "consumo_fora_de_ponta"]]
-        self._demanda = df[["datas", "demanda_ponta", "demanda_fora_de_ponta"]]
-        self._data = df.datas
+        self.demanda = df[["datas", "demanda_ponta", "demanda_fora_de_ponta"]]
+        self.data = df.datas
     
     @Fatura.data.setter
-    def data(self, primeiro_indice: int):
+    def data(self, datas: pd.Series):
         if not self._data:
-            self._data = "fazendo"
+            self._data = datas
+
+    @Fatura.demanda.setter
+    def demanda(self, demandas: pd.DataFrame):
+            self._demanda = demandas
 
     @Fatura.medida_consumo.setter
     def medida_consumo(self, flag: Any) -> None:

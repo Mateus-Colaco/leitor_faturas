@@ -98,18 +98,18 @@ class CPFL(Fatura):
     def data(self, primeiro_indice: int):
         if not self._data:
             datas_lista = self.datas_lista_filtro(primeiro_indice)
-            datas_series = pd.Series(datas_lista, name="data")
+            datas_series = pd.Series(datas_lista, name="datas")
             self._data = datas_series.apply(self.transforma_data)
 
     @Fatura.demanda.setter
     def demanda(self, flag: Any):
         if self.ths == "verde":
             lista_demanda = self.filtra_lista_demanda("demanda - [")
-            self._demanda = pd.concat([self.data, lista_demanda], axis=1, ignore_index=True).rename(columns={0: "data", 1:"demanda"})
+            self._demanda = pd.concat([self.data, lista_demanda], axis=1, ignore_index=True).rename(columns={0: "datas", 1:"demanda_fora_de_ponta"})
         elif self.ths == "azul":
             lista_demandaP = self.filtra_lista_demanda("demanda ponta - [")
             lista_demandaFP = self.filtra_lista_demanda("demanda fora de ponta - [")
-            self._demanda = pd.concat([self.data, lista_demandaP, lista_demandaFP], axis=1, ignore_index=True).rename(columns={0: "data", 1:"demanda ponta", 2:"demanda fora de ponta"})
+            self._demanda = pd.concat([self.data, lista_demandaP, lista_demandaFP], axis=1, ignore_index=True).rename(columns={0: "datas", 1:"demanda_ponta", 2:"demanda_fora_de_ponta"})
 
     @Fatura.medida_consumo.setter
     def medida_consumo(self, indice: int):

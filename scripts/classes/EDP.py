@@ -106,9 +106,9 @@ class EDP(Fatura):
         self.ths = None
         self.nome = None
         df = self.dados_historico()
-        self.data = df["data"]
-        self.demanda = df[["data", "demanda"]]
-        self.consumo = df[["data", "consumo_ponta", "consumo_fora_de_ponta"]]
+        self.data = df["datas"]
+        self.demanda = df[["datas", "demanda_fora_de_ponta"]]
+        self.consumo = df[["datas", "consumo_ponta", "consumo_fora_de_ponta"]]
         self.medida_consumo = None
         self.medida_demanda = None
 
@@ -125,11 +125,11 @@ class EDP(Fatura):
         return self.dados_ths_verde(array)
 
     def dados_ths_verde(self, array):
-        df = pd.DataFrame(array, columns=['data', 'consumo_ponta', 'consumo_fora_de_ponta_ind', 'consumo_fora_de_ponta_cap', 'demanda'])
+        df = pd.DataFrame(array, columns=['datas', 'consumo_ponta', 'consumo_fora_de_ponta_ind', 'consumo_fora_de_ponta_cap', 'demanda_fora_de_ponta'])
         df['consumo_fora_de_ponta'] = df['consumo_fora_de_ponta_ind'].astype(float) + df['consumo_fora_de_ponta_cap'].astype(float)
         
         df.drop(['consumo_fora_de_ponta_cap', 'consumo_fora_de_ponta_ind'], axis=1, inplace=True)
-        df.data = pd.to_datetime(df.data, format="%m/%y")
+        df.datas = pd.to_datetime(df.datas, format="%m/%y")
         return df
     
     def organiza_array(self, array):
