@@ -1,5 +1,8 @@
+from datetime import datetime
 import PyPDF2
 from typing import Dict, List
+
+import pandas as pd
 
 
 class Fatura:
@@ -129,3 +132,23 @@ class Fatura:
     @ultima_pagina.setter
     def ultima_pagina(self, pagina: str) -> None:
         self._ultima_pagina = pagina
+
+    def transforma_data(self, x: str) -> datetime:
+        relacao_mes_val = {
+            "jan": "01-01",
+            "fev": "01-02",
+            "mar": "01-03",
+            "abr": "01-04",
+            "mai": "01-05",
+            "jun": "01-06",
+            "jul": "01-07",
+            "ago": "01-08",
+            "set": "01-09",
+            "out": "01-10",
+            "nov": "01-11",
+            "dez": "01-12",
+        }
+        try:
+            return pd.to_datetime(relacao_mes_val[x[:3]] + "-" + x[-4:], format="%d-%m-%Y")
+        except ValueError:
+            return pd.to_datetime(relacao_mes_val[x[:3]] + "-" + x[-2:], format="%d-%m-%y")

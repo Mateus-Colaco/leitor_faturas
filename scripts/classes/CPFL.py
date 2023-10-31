@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any, List, Tuple
 from funcoes.f_database import arruma_decimal
 
-# FALTA DESENVOLVER DEMANDA E  MEDIDA DEMANDA
+# FALTA DESENVOLVER MEDIDA DEMANDA
 
 class CPFL(Fatura):
     def __init__(self, path: str) -> None:
@@ -111,7 +111,6 @@ class CPFL(Fatura):
             lista_demandaFP = self.filtra_lista_demanda("demanda fora de ponta - [")
             self._demanda = pd.concat([self.data, lista_demandaP, lista_demandaFP], axis=1, ignore_index=True).rename(columns={0: "data", 1:"demanda ponta", 2:"demanda fora de ponta"})
 
-
     @Fatura.medida_consumo.setter
     def medida_consumo(self, indice: int):
         pag = self.ultima_pagina[indice:] 
@@ -153,16 +152,22 @@ class CPFL(Fatura):
         try:
             ultimo_index = datas.index("")
         except Exception:
-            medida = self._consumo["medida_ponta"][0].lower()
-            ultimo_index = list(filter(lambda x: medida in x, datas[1:]))[0]
-            ultimo_index = datas.index(ultimo_index) + 1
+            datas = "\n".join(datas)
+            ultimo_index = re.search("\n\w.*dias", datas).span()[0] 
+            datas = datas[:ultimo_index].split("\n")
+            # medida = self._consumo["medida_ponta"][0].lower()
+            # ultimo_index = list(filter(lambda x: medida in x, datas[1:]))[0]
+            # ultimo_index = datas.index(ultimo_index) + 1
         return self.datas_texto(datas[1:ultimo_index])
 
     def datas_texto(self, datas:List[str]):
         datas = "\n".join(datas)
         ano_anterior = self.encontra_ano_anterior(datas)
         inputs = (datas, ano_anterior)
-        return self.set_ano_atual(*inputs) + self.set_ano_anterior(*inputs)
+        if ano_anterior := self.set_ano_anterior(*inputs):
+            return self.set_ano_atual(*inputs) + ano_anterior
+        return self.set_ano_atual(*inputs)
+        
 
     def encontra_ano_anterior(self, datas:str) -> int:
         """
@@ -200,20 +205,3 @@ class CPFL(Fatura):
         ano_atual_lista = list(filter(lambda x: x != "", ano_atual_lista))[1:]
         return [f"{x[:3]}/{str(ano_anterior+1)}" for x in ano_atual_lista]
     
-    def transforma_data(self, x: str) -> datetime:
-        relacao_mes_val = {
-            "jan": "01-01",
-            "fev": "01-02",
-            "mar": "01-03",
-            "abr": "01-04",
-            "mai": "01-05",
-            "jun": "01-06",
-            "jul": "01-07",
-            "ago": "01-08",
-            "set": "01-09",
-            "out": "01-10",
-            "nov": "01-11",
-            "dez": "01-12",
-        }
-
-        return pd.to_datetime(relacao_mes_val[x[:3]] + "-" + x[-4:], format="%d-%m-%Y")
