@@ -1,5 +1,7 @@
-from typing import Any, List, Tuple
+import pandas as pd
+import regex as re
 from Fatura import Fatura
+from typing import Any, List, Tuple
 
 
 class ELEKTRO(Fatura):
@@ -79,17 +81,40 @@ class ELEKTRO(Fatura):
         self._consumo = "fazendo"
     
     @Fatura.data.setter
-    def data(self, primeiro_indice: int):
+    def data(self, flag: Any):
         if not self._data:
-            self._data = "fazendo"
+            dt_str = self.data_string()
+            dt_datetime = pd.to_datetime(dt_str, format="%m/%Y")
+            self._data = pd.Series(dt_datetime, name="datas")
+
+    @Fatura.demanda.setter
+    def demanda(self, flag: Any):
+        if not self._demanda:
+            self._demanda = "fazendo"
 
     @Fatura.medida_consumo.setter
-    def medida_consumo(self, indice: int) -> None:
-        self._medida_consumo = "fazendo"
+    def medida_consumo(self, flag: Any):
+        self._medida_consumo = re.search('consumo ponta te (\wwh)', self.primeira_pagina).group(1)
+
+    @Fatura.medida_demanda.setter
+    def medida_demanda(self, flag: Any):
+        self._medida_demanda = re.search('demanda tusd (\ww)', self.primeira_pagina).group(1)
 
     @Fatura.nome.setter
     def nome(self, flag: Any):
-        self._nome = "fazendo"
-           
+        if "segunda via" in self._primeira_pagina:
+            self._nome = self._primeira_pagina.split("\n")[3]
+        else:
+            self._nome = self._primeira_pagina.split("\n")[1]
+
+    @Fatura.ths.setter
+    def ths(self, flag: Any):
+        self._ths = re.search("horária (\w*)\s/", self._primeira_pagina).group(1)
+
     def main(self):
-        print("nao desenvolvido")
+        self.ths, self.nome = None, None
+        self.medida_consumo, self.medida_demanda = None, None
+        self.data = None
+
+    def data_string(self) -> str:
+        return re.search("leitura atual: \d.*/(\d*/\d*)", self.primeira_pagina).group(1)

@@ -38,7 +38,7 @@ class Identificador:
         distribuidoras = ["enel sp", "elektro", "cpfl", "copel", "cemig", "edp"]
         return dict(zip(textos, distribuidoras))
     
-    def main(self) -> Any:
+    def main(self) -> Union[CEMIG.CEMIG, COPEL.COPEL, CPFL.CPFL, EDP.EDP, ENEL.ENEL, ELEKTRO.ELEKTRO, None]:
         distr = self.get_distribuidora()
         if distr == "cemig":
             return CEMIG.CEMIG

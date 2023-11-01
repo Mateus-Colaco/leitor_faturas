@@ -145,7 +145,7 @@ class CPFL(Fatura):
         self.demanda = None
 
     def datas_lista_sem_filtro(self, indice: int) -> List[str]:
-        return re.sub("ll.*", "", self.ultima_pagina[indice:]).split("\n")
+        return re.sub("(jul)?ll.*", r"\1", self.ultima_pagina[indice:]).split("\n")
 
     def datas_lista_filtro(self, indice: int) -> List[str]:
         datas = self.datas_lista_sem_filtro(indice)

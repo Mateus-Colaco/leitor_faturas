@@ -46,6 +46,8 @@ class CEMIG(Fatura):
         dados_lista = list(map(self.split_str, self.dados_lista(idx_0, idx_1)))
         cols = ["datas", "demanda_ponta", "demanda_fora_de_ponta", "consumo_ponta", "consumo_fora_de_ponta"]
         df = DataFrame(dados_lista, columns=cols)
+        df.consumo_ponta = df.consumo_ponta.astype(str).str.replace(".", "", regex=False).astype(int)
+        df.consumo_fora_de_ponta = df.consumo_fora_de_ponta.astype(str).str.replace(".", "", regex=False).astype(int)
         df.datas = df.datas.apply(self.transforma_data)
         
         self.consumo = df[["datas", "consumo_ponta", "consumo_fora_de_ponta"]]
