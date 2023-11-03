@@ -1,6 +1,6 @@
 import pandas as pd
 import regex as re
-from Fatura import Fatura
+from scripts.classes.Fatura import Fatura
 from typing import Any, List, Tuple
 
 

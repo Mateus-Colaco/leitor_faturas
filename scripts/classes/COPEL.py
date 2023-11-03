@@ -1,7 +1,7 @@
 import regex as re
 import pandas as pd
 from typing import Any, List, Tuple
-from Fatura import Fatura
+from scripts.classes.Fatura import Fatura
 
 
 class COPEL(Fatura):

@@ -1,7 +1,7 @@
 import os
 from typing import Any, Dict, Union
-from classes.Fatura import Fatura
-from classes import CEMIG, COPEL, CPFL, EDP, ELEKTRO, ENEL
+from scripts.classes.Fatura import Fatura
+from scripts.classes import CEMIG, COPEL, CPFL, EDP, ELEKTRO, ENEL
 
 class Identificador:
     """

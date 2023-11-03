@@ -87,7 +87,7 @@ def salva_novos_clientes(ucs_nova: DataFrame, db_path: str) -> bool:
     """
     try:
         conn = sqlite3.connect(db_path)
-        ucs_nova.to_sql("clientes", conn, index=False, if_exists="append")
+        ucs_nova.drop_duplicates(["nome", "uc"])[["id", "distribuidora", "nome", "uc"]].to_sql("clientes", conn, index=False, if_exists="append")
         conn.close()
         return True
     except Exception:
@@ -130,7 +130,11 @@ def criar_id_consumos(df_id: DataFrame, df_consumo: DataFrame) -> DataFrame:
     """
     df = df_id.merge(df_consumo, on=["nome", "uc", "distribuidora"])
     df["id_datas"] = df["id"] + "-" + df["datas"].dt.strftime("%m%Y")
-    return df.drop(columns=["nome", "id", "datas", "uc", "distribuidora", "ths"])
+    try:
+        return df.drop(columns=["nome", "id", "datas", "uc", "distribuidora", "ths"])
+    except KeyError:
+        return df.drop(columns=["nome", "id", "datas", "uc", "distribuidora"])
+
 
 
 def get_consumos_existentes(db_path: str, distribuidora: str) -> DataFrame:

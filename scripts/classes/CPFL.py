@@ -1,9 +1,9 @@
 import regex as re
-from classes.Fatura import Fatura
+from scripts.classes.Fatura import Fatura
 import pandas as pd
 from datetime import datetime
 from typing import Any, List, Tuple
-from funcoes.f_database import arruma_decimal
+from scripts.funcoes.f_database import arruma_decimal
 
 # FALTA DESENVOLVER MEDIDA DEMANDA
 
