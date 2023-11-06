@@ -1,6 +1,7 @@
 import regex as re
 import pandas as pd
 from typing import Any, List, Tuple
+from pandas import DataFrame, Series
 from scripts.classes.Fatura import Fatura
 
 

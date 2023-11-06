@@ -1,11 +1,9 @@
 import regex as re
-from scripts.classes.Fatura import Fatura
 import pandas as pd
-from datetime import datetime
 from typing import Any, List, Tuple
+from scripts.classes.Fatura import Fatura
 from scripts.funcoes.f_database import arruma_decimal
 
-# FALTA DESENVOLVER MEDIDA DEMANDA
 
 class CPFL(Fatura):
     def __init__(self, path: str) -> None:
@@ -75,6 +73,70 @@ class CPFL(Fatura):
         info = re.sub("ll.*", "", texto.replace("dias", "\ndias")).split("\n")
         return list(filter(lambda x: x != '', info))
 
+    def main(self) -> None:
+        self.data = self._texto_posicao("consumo fora de ponta")
+        self.nome = None
+        self.ths = None
+        self.consumo = None
+        self.demanda = None
+
+    def datas_lista_sem_filtro(self, indice: int) -> List[str]:
+        return re.sub("(jul)?ll.*", r"\1", self.ultima_pagina[indice:]).split("\n")
+
+    def datas_lista_filtro(self, indice: int) -> List[str]:
+        datas = self.datas_lista_sem_filtro(indice)
+        try:
+            ultimo_index = datas.index("")
+        except Exception:
+            datas = "\n".join(datas)
+            ultimo_index = re.search("\n\w.*dias", datas).span()[0] 
+            datas = datas[:ultimo_index].split("\n")
+        return self.datas_texto(datas[1:ultimo_index])
+
+    def datas_texto(self, datas:List[str]):
+        datas = "\n".join(datas)
+        ano_anterior = self.encontra_ano_anterior(datas)
+        inputs = (datas, ano_anterior)
+        if ano_anterior := self.set_ano_anterior(*inputs):
+            return self.set_ano_atual(*inputs) + ano_anterior
+        return self.set_ano_atual(*inputs)
+        
+    def encontra_ano_anterior(self, datas:str) -> int:
+        """
+        Retorna o ano A-1 com base nas datas fornecidas.
+
+        Args:
+            datas (str): Uma string contendo datas no formato 'Mês/Ano'.
+
+        Returns:
+            int: O ano A-1.
+        """
+        return int(datas[:4]) - 1
+
+    def filtra_lista_demanda(self, energia_desc: str):
+        indice = self._texto_posicao(energia_desc)
+        indice_fim = self.ultima_pagina[indice + len(energia_desc):].find("]") + (indice + len(energia_desc))
+        self.medida_demanda = self.ultima_pagina[indice + len(energia_desc):indice_fim]
+        lista_demanda = list(filter(lambda x: x != '', self._lista_demanda(indice)))
+        return pd.Series([float(valor.replace(',', '.')) for valor in lista_demanda if valor.replace(',', '.').replace('.', '', 1).isdigit()], name="demanda")
+
+    def set_ano_anterior(self, datas: str, ano_anterior: int) -> List[str]:
+        sep = datas.find(str(ano_anterior))
+        ano_anterior_lista = re.sub("\s", "\n", datas[sep:]).split("\n")
+        ano_anterior_lista = list(filter(lambda x: x != "", ano_anterior_lista))[1:]
+        return [f"{x[:3]}/{ano_anterior}" for x in ano_anterior_lista]
+
+    def set_ano_atual(self, datas: str, ano_anterior: int) -> List[str]:
+        sep = datas.find(str(ano_anterior))
+
+        if sep != -1:
+            ano_atual_lista = re.sub("\s", "\n", datas[:sep]).split("\n")
+        else:
+            ano_atual_lista = re.sub("\s", "\n", datas[:]).split("\n")
+
+        ano_atual_lista = list(filter(lambda x: x != "", ano_atual_lista))[1:]
+        return [f"{x[:3]}/{str(ano_anterior+1)}" for x in ano_atual_lista]
+    
     @Fatura.distribuidora.getter
     def distribuidora(self) -> str:
         return self.__class__.__name__ 
@@ -122,6 +184,10 @@ class CPFL(Fatura):
             else "nao encontrado"
         )
 
+    @Fatura.medida_demanda.setter
+    def medida_demanda(self, medida_demanda: str):
+        self._medida_demanda = medida_demanda
+
     @Fatura.nome.setter
     def nome(self, flag: Any):
         self._nome = self.primeira_pagina.split("\n")[0].replace(" ", "_").replace(".", "")
@@ -136,72 +202,3 @@ class CPFL(Fatura):
             self._ths = THSs[key]
         else:
             self._ths = "ths_nao_encontrada"
-
-    def main(self) -> None:
-        self.data = self._texto_posicao("consumo fora de ponta")
-        self.nome = None
-        self.ths = None
-        self.consumo = None
-        self.demanda = None
-
-    def datas_lista_sem_filtro(self, indice: int) -> List[str]:
-        return re.sub("(jul)?ll.*", r"\1", self.ultima_pagina[indice:]).split("\n")
-
-    def datas_lista_filtro(self, indice: int) -> List[str]:
-        datas = self.datas_lista_sem_filtro(indice)
-        try:
-            ultimo_index = datas.index("")
-        except Exception:
-            datas = "\n".join(datas)
-            ultimo_index = re.search("\n\w.*dias", datas).span()[0] 
-            datas = datas[:ultimo_index].split("\n")
-            # medida = self._consumo["medida_ponta"][0].lower()
-            # ultimo_index = list(filter(lambda x: medida in x, datas[1:]))[0]
-            # ultimo_index = datas.index(ultimo_index) + 1
-        return self.datas_texto(datas[1:ultimo_index])
-
-    def datas_texto(self, datas:List[str]):
-        datas = "\n".join(datas)
-        ano_anterior = self.encontra_ano_anterior(datas)
-        inputs = (datas, ano_anterior)
-        if ano_anterior := self.set_ano_anterior(*inputs):
-            return self.set_ano_atual(*inputs) + ano_anterior
-        return self.set_ano_atual(*inputs)
-        
-
-    def encontra_ano_anterior(self, datas:str) -> int:
-        """
-        Retorna o ano A-1 com base nas datas fornecidas.
-
-        Args:
-            datas (str): Uma string contendo datas no formato 'Mês/Ano'.
-
-        Returns:
-            int: O ano A-1.
-        """
-        return int(datas[:4]) - 1
-
-    def filtra_lista_demanda(self, energia_desc: str):
-        indice = self._texto_posicao(energia_desc)
-        indice_fim = self.ultima_pagina[indice + len(energia_desc):].find("]") + (indice + len(energia_desc))
-        self._medida_demanda = self.ultima_pagina[indice + len(energia_desc):indice_fim]
-        lista_demanda = list(filter(lambda x: x != '', self._lista_demanda(indice)))
-        return pd.Series([float(valor.replace(',', '.')) for valor in lista_demanda if valor.replace(',', '.').replace('.', '', 1).isdigit()], name="demanda")
-
-    def set_ano_anterior(self, datas: str, ano_anterior: int) -> List[str]:
-        sep = datas.find(str(ano_anterior))
-        ano_anterior_lista = re.sub("\s", "\n", datas[sep:]).split("\n")
-        ano_anterior_lista = list(filter(lambda x: x != "", ano_anterior_lista))[1:]
-        return [f"{x[:3]}/{ano_anterior}" for x in ano_anterior_lista]
-
-    def set_ano_atual(self, datas: str, ano_anterior: int) -> List[str]:
-        sep = datas.find(str(ano_anterior))
-
-        if sep != -1:
-            ano_atual_lista = re.sub("\s", "\n", datas[:sep]).split("\n")
-        else:
-            ano_atual_lista = re.sub("\s", "\n", datas[:]).split("\n")
-
-        ano_atual_lista = list(filter(lambda x: x != "", ano_atual_lista))[1:]
-        return [f"{x[:3]}/{str(ano_anterior+1)}" for x in ano_atual_lista]
-    

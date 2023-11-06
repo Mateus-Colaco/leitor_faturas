@@ -66,6 +66,39 @@ class EDP(Fatura):
             .replace("dias", "\ndias")
             .split("\n")
         )
+
+    def main(self):
+        self.ths = None
+        self.nome = None
+        df = self.dados_historico()
+        self.data = df["datas"]
+        self.demanda = df[["datas", "demanda_fora_de_ponta"]]
+        self.consumo = df[["datas", "consumo_ponta", "consumo_fora_de_ponta"]]
+        self.medida_consumo = None
+        self.medida_demanda = None
+
+    def delimitador_historico(self):
+        """
+        Define o delimitador da ultima pagina onde esta o historico de consumo e demanda
+        """
+        index = self.ultima_pagina.find("histórico de consumo")
+        texto = self.ultima_pagina[:index].split("\n", )[:13]
+        return list(map(lambda x: self.organiza_array(x), texto))
+
+    def dados_historico(self) -> pd.DataFrame:
+        array = self.delimitador_historico()
+        return self.dados_ths_verde(array)
+
+    def dados_ths_verde(self, array):
+        df = pd.DataFrame(array, columns=['datas', 'consumo_ponta', 'consumo_fora_de_ponta_ind', 'consumo_fora_de_ponta_cap', 'demanda_fora_de_ponta'])
+        df['consumo_fora_de_ponta'] = df['consumo_fora_de_ponta_ind'].astype(float) + df['consumo_fora_de_ponta_cap'].astype(float)
+        
+        df.drop(['consumo_fora_de_ponta_cap', 'consumo_fora_de_ponta_ind'], axis=1, inplace=True)
+        df.datas = pd.to_datetime(df.datas, format="%m/%y")
+        return df
+    
+    def organiza_array(self, array):
+        return array.split(" ")[:5] if self.ths == 'verde' else array.split(" ")[:6]
     
     @Fatura.consumo.setter
     def consumo(self, consumo: pd.DataFrame):
@@ -101,36 +134,3 @@ class EDP(Fatura):
     def ths(self, flag: Any):
         index = self._primeira_pagina.find("modalidade tarifária")
         self._ths = "verde" if "verde" in self._primeira_pagina[index:].split("\n")[1] else "azul"
-
-    def main(self):
-        self.ths = None
-        self.nome = None
-        df = self.dados_historico()
-        self.data = df["datas"]
-        self.demanda = df[["datas", "demanda_fora_de_ponta"]]
-        self.consumo = df[["datas", "consumo_ponta", "consumo_fora_de_ponta"]]
-        self.medida_consumo = None
-        self.medida_demanda = None
-
-    def delimitador_historico(self):
-        """
-        Define o delimitador da ultima pagina onde esta o historico de consumo e demanda
-        """
-        index = self.ultima_pagina.find("histórico de consumo")
-        texto = self.ultima_pagina[:index].split("\n", )[:13]
-        return list(map(lambda x: self.organiza_array(x), texto))
-
-    def dados_historico(self) -> pd.DataFrame:
-        array = self.delimitador_historico()
-        return self.dados_ths_verde(array)
-
-    def dados_ths_verde(self, array):
-        df = pd.DataFrame(array, columns=['datas', 'consumo_ponta', 'consumo_fora_de_ponta_ind', 'consumo_fora_de_ponta_cap', 'demanda_fora_de_ponta'])
-        df['consumo_fora_de_ponta'] = df['consumo_fora_de_ponta_ind'].astype(float) + df['consumo_fora_de_ponta_cap'].astype(float)
-        
-        df.drop(['consumo_fora_de_ponta_cap', 'consumo_fora_de_ponta_ind'], axis=1, inplace=True)
-        df.datas = pd.to_datetime(df.datas, format="%m/%y")
-        return df
-    
-    def organiza_array(self, array):
-        return array.split(" ")[:5] if self.ths == 'verde' else array.split(" ")[:6]
