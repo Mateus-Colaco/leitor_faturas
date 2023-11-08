@@ -1,16 +1,25 @@
 import os
-from sqlite3 import Connection, Cursor
 import sys
 import contextlib
 import pandas as pd
-from scripts.funcoes.f_database import *
 from typing import Dict, List, Tuple
 from PyPDF2.errors import PdfReadError
+from sqlite3 import Connection, Cursor
+from scripts.funcoes.f_database import *
 from scripts.classes.Fatura import Fatura
 from scripts.classes.Identificador import Identificador
 
 join_path = lambda y, x: os.path.join(y, x)
 filename = lambda path, filetype: path.split("\\")[-1].split(filetype)[0]
+
+def adiciona_data_para_forecast(df: DataFrame) -> DataFrame:
+    """
+    Adiciona nova linha ao dataframe com a data a ser realizada a previsão
+    """
+    nova_data = pd.DateOffset(months=1) + df.datas.iloc[-1]
+    df = pd.concat([df, pd.DataFrame([[pd.NA for i in range(len(df.columns))]], columns=df.columns)], axis=0, ignore_index=True).reset_index(drop=True)
+    df.datas.iloc[-1] = nova_data
+    return df
 
 
 def set_distribuidoras(paths: List[Dict[str, str]]) -> Dict[str, Fatura]:
@@ -52,9 +61,9 @@ def set_consumos_e_demandas(DISTRIBUIDORAS: Dict[str, Fatura]) -> Tuple[DataFram
     DEMANDAS = []
     for key in DISTRIBUIDORAS:
         if key in ["CPFL", "EDP", "COPEL", "CEMIG", "ENEL"]:
-            for distr in DISTRIBUIDORAS[key]:
-                consumo = set_consumo_df(distr)
-                DEMANDAS.append(distr.demanda)
+            for dis in DISTRIBUIDORAS[key]:
+                consumo = set_consumo_df(dis)
+                DEMANDAS.append(dis.demanda)
                 CONSUMOS.append(consumo)
     return (
         pd.concat(CONSUMOS, ignore_index=True).set_index('datas'),
@@ -62,17 +71,17 @@ def set_consumos_e_demandas(DISTRIBUIDORAS: Dict[str, Fatura]) -> Tuple[DataFram
     )
 
 
-def set_consumo_df(distr: Fatura) -> DataFrame:
+def set_consumo_df(dis: Fatura) -> DataFrame:
     """
     Monta o dataframe de consumo com os valores da classe original (Fatura)
     """
-    consumo = distr.consumo
-    consumo['nome'] = distr.nome.replace(" ", "_")
-    consumo['uc'] = distr._caminho.split("\\")[-1][:-4]
-    consumo['distribuidora'] = distr.distribuidora
-    consumo['medida_consumo'] = distr.medida_consumo
-    consumo['medida_demanda'] = distr.medida_demanda
-    consumo['ths'] = distr.ths
+    consumo = dis.consumo
+    consumo['nome'] = dis.nome.replace(" ", "_")
+    consumo['uc'] = dis._caminho.split("\\")[-1][:-4]
+    consumo['distribuidora'] = dis.distribuidora
+    consumo['medida_consumo'] = dis.medida_consumo
+    consumo['medida_demanda'] = dis.medida_demanda
+    consumo['ths'] = dis.ths
     return consumo
 
 
@@ -208,9 +217,9 @@ def salva_consumos_csv(resultados: Dict[str, List[str]]) -> None:
         df.nome = df.nome.str.rstrip().str.lstrip() + "-" + df.uc.str.rstrip().str.lstrip()
         df.datas = pd.to_datetime(df.datas, format="%m%Y")
         for nome in df.nome.unique():
-            path_csv: str = os.path.join(path_key, nome)
+            path_csv: str = os.path.join(path_key, str(nome))
             os.makedirs(path_csv, exist_ok=True)
-            df.loc[df.nome == nome][["datas", "consumo_total"]].sort_values("datas", ascending=True).to_csv(f"{path_csv}\\consumo_{nome}.csv", index=False, sep=';')
+            adiciona_data_para_forecast(df.loc[df.nome == nome][["datas", "consumo_total"]].sort_values("datas", ascending=True)).to_csv(f"{path_csv}\\consumo_{nome}.csv", index=False, sep=';')
 
 
 def main(path: str):

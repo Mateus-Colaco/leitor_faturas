@@ -21,9 +21,10 @@ class Fatura:
         medida_demanda e medida_consumo (str): Descricao da unidade de medida da (consumo | demanda)
         ths (str): Descricao da tarifa horosazonal do cliente 
     """
+
     def __init__(self, path: str) -> None:
         self._caminho = path
-        self._pdf, self._primeira_pagina, self._ultima_pagina =  None, None, None
+        self._pdf, self._primeira_pagina, self._ultima_pagina = None, None, None
         self._le_fatura()
         self._nome, self._consumo, self._demanda = None, None, None
         self._ths, self._medida_consumo, self._medida_demanda = None, None, None
@@ -47,11 +48,12 @@ class Fatura:
         self.pdf = conteudo
         self.primeira_pagina = list(conteudo.values())[0]
         self.ultima_pagina = list(conteudo.values())[-1]
-    
+
     @property
     def distribuidora(self) -> None:
+
         return None
-    
+
     @property
     def consumo(self) -> List[float]:
         return self._consumo
@@ -59,11 +61,11 @@ class Fatura:
     @consumo.setter
     def consumo(self, consumo: List[float]) -> None:
         self._consumo = consumo
-    
+
     @property
     def data(self) -> List[str]:
         return self._data
-    
+
     @data.setter
     def data(self, datas) -> None:
         self._data = datas
@@ -75,7 +77,7 @@ class Fatura:
     @demanda.setter
     def demanda(self, demanda: List[float]) -> None:
         self._demanda = demanda
-    
+
     @property
     def medida_demanda(self) -> str:
         return self._medida_demanda
@@ -95,7 +97,7 @@ class Fatura:
     @property
     def nome(self) -> str:
         return self._nome
-    
+
     @nome.setter
     def nome(self, nome: str) -> None:
         self._nome = nome
@@ -103,7 +105,7 @@ class Fatura:
     @property
     def pdf(self):
         return self._pdf
-    
+
     @pdf.setter
     def pdf(self, pdf: Dict[str, str]):
         self._pdf = pdf
@@ -111,7 +113,7 @@ class Fatura:
     @property
     def primeira_pagina(self) -> str:
         return self._primeira_pagina
-    
+
     @primeira_pagina.setter
     def primeira_pagina(self, pagina: str) -> None:
         self._primeira_pagina = pagina
@@ -119,7 +121,7 @@ class Fatura:
     @property
     def ths(self) -> str:
         return self._ths
-    
+
     @ths.setter
     def ths(self, ths: str) -> None:
         self._ths = ths
@@ -127,7 +129,7 @@ class Fatura:
     @property
     def ultima_pagina(self) -> str:
         return self._ultima_pagina
-    
+
     @ultima_pagina.setter
     def ultima_pagina(self, pagina: str) -> None:
         self._ultima_pagina = pagina

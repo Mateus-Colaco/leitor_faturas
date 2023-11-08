@@ -14,6 +14,9 @@ class ENEL(Fatura):
         super().__init__(path)
            
     def main(self):
+        """
+        Define os valores das propriedades da classe
+        """
         temp = self.historico_dataframe(self.historico_lista())
         self.data = temp.datas
         self.consumo = temp[["datas", "consumo_ponta", "consumo_fora_de_ponta"]]
@@ -28,6 +31,12 @@ class ENEL(Fatura):
         return df
     
     def encontra_medidas(self) -> Tuple[str, str]:
+        """
+        Encontra as medidas de consumo e demanda
+
+        Returns:
+            - Tuple[str, str]: medida de demanda, medida de consumo
+        """
         padrao1 = "quant\.\n?.*\((\ww)\/\s?\n?(\wwh)"
         resultado = re.search(padrao1, self.primeira_pagina)
         if not resultado:
@@ -36,12 +45,27 @@ class ENEL(Fatura):
         return resultado.groups()
 
     def historico_lista(self) -> List[str]:
+        """
+        Encontra o histórico no texto
+
+        Returns:
+            - str: o histórico como lista em que cada elemento representa uma linha 
+        """
         pattern = "\d\s(28|30|31)( \w+|\w+)"
         indice0 = self.primeira_pagina.find("mês/ano")
         indice1 = re.search(pattern, self.primeira_pagina[indice0:]).span(2)[0] + indice0
         return self.primeira_pagina[indice0:indice1].split("\n")[2:]
     
     def historico_dataframe(self, historico_lista: List[str]) -> DataFrame:
+        """
+        Transforma o histórico em formato de lista em um DataFrame
+
+        Args:
+            - historico_lista (List[str]): o historico, retornado pela função historico_lista()
+        
+        Returns:
+            - DataFrame: o Histórico encontrado, formatado como uma tabela/dataframe
+        """
         df = DataFrame(
             [re.split("\s+|\t", arruma_string_df(x)) for x in historico_lista]
         )

@@ -45,12 +45,12 @@ class COPEL(Fatura):
         self.data = df.datas
     
     @Fatura.data.setter
-    def data(self, datas: pd.Series):
+    def data(self, datas: Series):
         if not self._data:
             self._data = datas
 
     @Fatura.demanda.setter
-    def demanda(self, demandas: pd.DataFrame):
+    def demanda(self, demandas: DataFrame):
             self._demanda = demandas
 
     @Fatura.medida_consumo.setter
@@ -69,7 +69,7 @@ class COPEL(Fatura):
             self._nome = self._ultima_pagina.split("\n")[3]
     
     def dataframe(self, pagina_lista: List[str]):
-        return pd.DataFrame(
+        return DataFrame(
             list(
                 map(
                     lambda i:list(filter(lambda x: x!="", i)),
@@ -84,7 +84,7 @@ class COPEL(Fatura):
         self.medida_demanda = None
         self.consumo = None
 
-    def arruma_data_sem_pgto(self, df: pd.DataFrame) -> pd.DataFrame:
+    def arruma_data_sem_pgto(self, df: DataFrame) -> DataFrame:
         """
         Algumas datas de pgto mais recentes ainda nao processaram ou nao receberam pgto e estao em branco, por isso, 
         os dados de consumo podem ser deslocados para a posicao dessa data, desarrumando o dataframe, o script checa se o valor é uma data
@@ -99,7 +99,7 @@ class COPEL(Fatura):
                 df = self.atribui_valores_corretos(df, colunas_corretas, colunas_incorretas, index)
         return df
 
-    def arruma_consumos_nao_separados(self, df: pd.DataFrame) -> pd.DataFrame:
+    def arruma_consumos_nao_separados(self, df: DataFrame) -> DataFrame:
         """
         Alguns pdf's são lidos de forma incorreta, não separando os consumos P e FP (100kWh P e 1000kWh FP podem ser lidos como 1001000)
         o script separa esses consumos e os ajusta suas respectivas colunas
@@ -112,20 +112,20 @@ class COPEL(Fatura):
             df.loc[0].consumo_fora_de_ponta = fp
         return df
 
-    def atribui_demanda_P_e_FP(self, df: pd.DataFrame, num_chars: int) -> Tuple[pd.DataFrame, str, str]:
+    def atribui_demanda_P_e_FP(self, df: DataFrame, num_chars: int) -> Tuple[DataFrame, str, str]:
             p, fp = df.consumo_ponta.iloc[0][:num_chars], df.consumo_ponta.iloc[0][num_chars:]
             df.loc[0, ["demanda_ponta", "demanda_fora_de_ponta"]] = df[["consumo_fora_de_ponta", "demanda_ponta"]].iloc[0].values
             return df, p, fp
 
-    def atribui_valores_corretos(self, df: pd.DataFrame, colunas_corretas: List[str], colunas_incorretas: List[str], index: int) -> pd.DataFrame:
+    def atribui_valores_corretos(self, df: DataFrame, colunas_corretas: List[str], colunas_incorretas: List[str], index: int) -> DataFrame:
         df.loc[index, colunas_corretas] = df[colunas_incorretas].iloc[index].values
         df.loc[index, ["data_pgto"]] = "01/01/1900"
         return df
 
-    def checa_diferenca(self, df: pd.DataFrame, lim: float) -> float:
+    def checa_diferenca(self, df: DataFrame, lim: float) -> float:
         return df["consumo_ponta"].astype(float).iloc[0] / df["consumo_ponta"].astype(float).iloc[1] > lim
 
-    def muda_tipo(self, df: pd.DataFrame) -> pd.DataFrame:
+    def muda_tipo(self, df: DataFrame) -> DataFrame:
         df.demanda_ponta = pd.to_numeric(df.demanda_ponta, errors='coerce')
         df.demanda_fora_de_ponta = pd.to_numeric(df.demanda_fora_de_ponta, errors='coerce')
         df.consumo_ponta = pd.to_numeric(df.consumo_ponta, errors='coerce')
@@ -133,7 +133,7 @@ class COPEL(Fatura):
         df.datas = pd.to_datetime(df.datas, format="%m/%Y")
         return df
             
-    def remove_outliers(self, df: pd.DataFrame) -> pd.DataFrame:
+    def remove_outliers(self, df: DataFrame) -> DataFrame:
         cols = ["consumo_ponta", "consumo_fora_de_ponta", "demanda_ponta", "demanda_fora_de_ponta"]
         for col in cols:
             lim_max = df[col].quantile(0.9)
